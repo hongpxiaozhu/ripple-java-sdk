@@ -23,7 +23,7 @@ public class RippleRpcClientImpl implements RippleRpcClient {
     }
 
     @Override
-    public <T> String execute(RippleRequest<T> rippleRequest) {
+    public <T> String execute(RippleRequest<T> rippleRequest) throws Exception{
         String requestStr = JSON.toJSONString(rippleRequest);
         RequestBody requestBody = RequestBody.create(
                 MediaType.parse("application/json; charset=utf-8"),
@@ -44,9 +44,9 @@ public class RippleRpcClientImpl implements RippleRpcClient {
             String resp = response.body().string();
             JSONObject jsonObject = JSON.parseObject(resp);
             return jsonObject.getString("result");
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new JsonRpcException(e.getMessage());
+            throw e;
         } finally {
             if (response != null) {
                 response.close();
