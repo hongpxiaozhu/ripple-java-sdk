@@ -38,6 +38,12 @@ public class RippleClient {
         this.jsonRpcClient = new RippleRpcClientImpl(url);
     }
 
+
+    /**
+     * 生成地址
+     * @return
+     * @throws Exception
+     */
     public Address generateAddress()throws Exception{
         SecureRandom random = new SecureRandom();
         byte[] seedBytes = new byte[16];
@@ -50,6 +56,12 @@ public class RippleClient {
         return Address.builder().address(addressOrAccountID).secret(secretOrSeedBase58).build();
     }
 
+    /**
+     * 获得余额
+     * @param address
+     * @return
+     * @throws Exception
+     */
     public BalanceResponse getBalance(String address)throws Exception{
         List<BalanceRequest> balanceRequests = new ArrayList<>();
         BalanceRequest balanceRequest = new BalanceRequest();
@@ -61,6 +73,12 @@ public class RippleClient {
         return balanceResponse;
     }
 
+    /**
+     * 获取块信息
+     * @param ledgerIndex
+     * @return
+     * @throws Exception
+     */
     public LegerResponse getBlockInfo(Long ledgerIndex)throws Exception{
         LedgerRequest ledgerRequest = LedgerRequest.builder().ledgerIndex(ledgerIndex).transactions(true).expand(false).build();
         List<LedgerRequest> ledgerRequests = new ArrayList<>();
@@ -71,6 +89,11 @@ public class RippleClient {
         return legerResponse;
     }
 
+    /**
+     * 获取当前块高度
+     * @return
+     * @throws Exception
+     */
     public LegerCurrentResponse getBlockHeight()throws Exception{
         RippleRequest<LedgerRequest> rippleRequest = new RippleRequest("ledger_current",new ArrayList());
         String json = this.jsonRpcClient.execute(rippleRequest);
@@ -78,6 +101,12 @@ public class RippleClient {
         return legerCurrentResponse;
     }
 
+    /**
+     * 获取transaction详细信息
+     * @param transactionHash
+     * @return
+     * @throws Exception
+     */
     public Transaction getTransaction(String transactionHash)throws Exception{
         List<TransactionRequest> transactionRequests = new ArrayList<>();
         TransactionRequest transactionRequest = TransactionRequest.builder().transaction(transactionHash).binary(false).build();
@@ -88,7 +117,15 @@ public class RippleClient {
         return transactionResponse;
     }
 
+    /**
+     * 发送transaction
+     * @param txJson
+     * @param secret
+     * @return
+     * @throws Exception
+     */
     public SubmitTransactionResponse sendTransaction(TxJson txJson,String secret)throws Exception{
+        //如果不填fee，则自动获取fee
         if(StringUtils.isBlank(txJson.getFee())) {
             RippleRequest<String> feeRippleRequest = new RippleRequest("fee", new ArrayList());
             String feeJson = this.jsonRpcClient.execute(feeRippleRequest);
@@ -97,7 +134,7 @@ public class RippleClient {
             String fee = drops.getString("median_fee");
             txJson.setFee(fee);
         }
-
+        //如果不填Sequence，则自动获取Sequence
         if(txJson.getSequence() == null){
             BalanceResponse balanceResponse = getBalance(txJson.getAccount());
             txJson.setSequence(balanceResponse.getAccountData().getSequence());
